@@ -58,7 +58,7 @@ air_basins <- extract_layer(
 
 write_geojson <- function (spobj, dsn = getwd(), layer = deparse(substitute(spobj)), quiet = FALSE) {
   tmpfn <- tempfile()
-  writeOGR(air_basins, dsn = tmpfn, layer = "", driver = "GeoJSON")
+  writeOGR(spobj, dsn = tmpfn, layer = "", driver = "GeoJSON")
   file <- file.path(dsn, str_c(layer, ".geojson"))
   file.rename(tmpfn, file)
   return(invisible(file))
@@ -74,15 +74,6 @@ counties <- extract_layer(
   datum = WGS84)
 
 message("Wrote contents to ", write_geojson(counties, dsn = "boundaries"))
-```
-
-```{r air_districts}
-air_districts <- extract_layer(
-  dsn = unzip_url("http://www.arb.ca.gov/ei/gislib/boundaries/ca_air_district.zip", keep_zipfile = TRUE),
-  layer = "CaAirDistrict",
-  datum = WGS84)
-
-message("Wrote contents to ", write_geojson(air_districts, dsn = "boundaries"))
 ```
 
 ```{r air_districts}
