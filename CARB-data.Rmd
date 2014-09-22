@@ -5,60 +5,11 @@ suppressPackageStartupMessages({
   })
 
 source_gist("1f2c85ea647435e5719e") # helper function: cached()
-```
+source_gist("3df508350ebed149a8bd") # helper function: unzip_url()
+source_gist("9f6758bf974cd265bdd8") # helper function: extract_layer()
+source_gist("00afc2e5cf6b9628dec8") # helper function: write_geojson()
 
-```{r DATUM}
 DATUM <- WGS84 <- CRS("+proj=longlat +datum=WGS84")
-```
-
-```{r unzip_url}
-#' To download and extract a zipped file (that may not have .zip at the end of the URL)
-unzip_url <- function (url, exdir, zipfile = basename(url), keep_zipfile = FALSE, quiet = FALSE) {
-  require(httr)
-  if (missing(exdir)) {
-    exdir <- with(parse_url(url), file.path(hostname, str_replace(path, ignore.case("\\.zip$"), ""))) # FIXME: assumes sep is '/'
-  }
-  zipfile <- file.path(exdir, zipfile)
-  if (!file.exists(zipfile)) {
-    if (!file.exists(exdir)) {
-      dir.create(exdir, recursive = TRUE) 
-    }
-    if (!quiet) message("Downloading to ", zipfile)
-    download.file(url, zipfile)
-  }
-  if (!quiet) message("Unzipping into ", exdir)
-  contents <- unzip(zipfile, exdir = exdir)
-  if (!keep_zipfile) file.remove(zipfile)
-  return(invisible(exdir))
-}
-```
-
-```{r extract_layer, cache=TRUE}
-#' To extract a layer from an (unzipped) shapefile
-extract_layer <- function (dsn, layer = basename(dsn), datum, quiet = FALSE, ...) {
-  require(rgdal)
-  msg <- capture.output(spobj <- readOGR(normalizePath(dsn), layer, ...))
-  if (!quiet) {
-    message("Extracting layer ", layer, " from ", dsn)
-    message(str_c(msg, "\n"))
-    message(str(spobj@data))
-  }
-  if (!missing(datum)) {
-    spobj <- spTransform(spobj, datum)
-  }
-  return(spobj)
-}
-```
-
-```{r write_geojson}
-#' To save a Spatial* object to a GeoJSON file
-write_geojson <- function (spobj, dsn = getwd(), layer = deparse(substitute(spobj)), quiet = FALSE) {
-  tmpfn <- tempfile()
-  writeOGR(spobj, dsn = tmpfn, layer = "", driver = "GeoJSON")
-  file <- file.path(dsn, str_c(layer, ".geojson"))
-  file.rename(tmpfn, file)
-  return(invisible(file))
-  }
 ```
 
 ```{r air_basins}
