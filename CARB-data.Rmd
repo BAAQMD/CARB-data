@@ -1,0 +1,95 @@
+```{r}
+suppressPackageStartupMessages({
+  library(rgdal)
+  library(devtools)
+  })
+
+source_gist("1f2c85ea647435e5719e") # helper function: cached()
+```
+
+```{r DATUM}
+DATUM <- WGS84 <- CRS("+proj=longlat +datum=WGS84")
+```
+
+```{r unzip_url}
+#' To download and extract a zipped file (that may not have .zip at the end of the URL)
+unzip_url <- function (url, exdir, zipfile = basename(url), keep_zipfile = FALSE, quiet = FALSE) {
+  require(httr)
+  if (missing(exdir)) {
+    exdir <- with(parse_url(url), file.path(hostname, str_replace(path, ignore.case("\\.zip$"), ""))) # FIXME: assumes sep is '/'
+  }
+  zipfile <- file.path(exdir, zipfile)
+  if (!file.exists(zipfile)) {
+    if (!file.exists(exdir)) {
+      dir.create(exdir, recursive = TRUE) 
+    }
+    if (!quiet) message("Downloading to ", zipfile)
+    download.file(url, zipfile)
+  }
+  if (!quiet) message("Unzipping into ", exdir)
+  contents <- unzip(zipfile, exdir = exdir)
+  if (!keep_zipfile) file.remove(zipfile)
+  return(invisible(exdir))
+}
+```
+
+```{r extract_layer, cache=TRUE}
+#' To extract a layer from an (unzipped) shapefile
+extract_layer <- function (dsn, layer = basename(dsn), datum, quiet = FALSE, ...) {
+  require(rgdal)
+  msg <- capture.output(spobj <- readOGR(normalizePath(dsn), layer, ...))
+  if (!quiet) {
+    message("Extracting layer ", layer, " from ", dsn)
+    message(str_c(msg, "\n"))
+    message(str(spobj@data))
+  }
+  if (!missing(datum)) {
+    spobj <- spTransform(spobj, datum)
+  }
+  return(spobj)
+}
+```
+
+```{r air_basins}
+air_basins <- extract_layer(
+  dsn = unzip_url("http://www.arb.ca.gov/ei/gislib/boundaries/ca_air_basins.zip", keep_zipfile = TRUE),
+  layer = "CaAirBasin",
+  datum = WGS84)
+
+write_geojson <- function (spobj, dsn = getwd(), layer = deparse(substitute(spobj)), quiet = FALSE) {
+  tmpfn <- tempfile()
+  writeOGR(air_basins, dsn = tmpfn, layer = "", driver = "GeoJSON")
+  file <- file.path(dsn, str_c(layer, ".geojson"))
+  file.rename(tmpfn, file)
+  return(invisible(file))
+  }
+
+message("Wrote contents to ", write_geojson(air_basins, dsn = "boundaries"))
+```
+
+```{r counties}
+counties <- extract_layer(
+  dsn = unzip_url("http://www.arb.ca.gov/ei/gislib/boundaries/ca_county.zip", keep_zipfile = TRUE),
+  layer = "CaCounty",
+  datum = WGS84)
+
+message("Wrote contents to ", write_geojson(counties, dsn = "boundaries"))
+```
+
+```{r air_districts}
+air_districts <- extract_layer(
+  dsn = unzip_url("http://www.arb.ca.gov/ei/gislib/boundaries/ca_air_district.zip", keep_zipfile = TRUE),
+  layer = "CaAirDistrict",
+  datum = WGS84)
+
+message("Wrote contents to ", write_geojson(air_districts, dsn = "boundaries"))
+```
+
+```{r air_districts}
+air_districts <- extract_layer(
+  dsn = unzip_url("http://www.arb.ca.gov/ei/gislib/boundaries/ca_air_district.zip", keep_zipfile = TRUE),
+  layer = "CaAirDistrict",
+  datum = WGS84)
+
+message("Wrote contents to ", write_geojson(air_districts, dsn = "boundaries"))
+```
