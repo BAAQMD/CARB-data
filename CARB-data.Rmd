@@ -50,12 +50,8 @@ extract_layer <- function (dsn, layer = basename(dsn), datum, quiet = FALSE, ...
 }
 ```
 
-```{r air_basins}
-air_basins <- extract_layer(
-  dsn = unzip_url("http://www.arb.ca.gov/ei/gislib/boundaries/ca_air_basins.zip", keep_zipfile = TRUE),
-  layer = "CaAirBasin",
-  datum = WGS84)
-
+```{r write_geojson}
+#' To save a Spatial* object to a GeoJSON file
 write_geojson <- function (spobj, dsn = getwd(), layer = deparse(substitute(spobj)), quiet = FALSE) {
   tmpfn <- tempfile()
   writeOGR(spobj, dsn = tmpfn, layer = "", driver = "GeoJSON")
@@ -63,6 +59,13 @@ write_geojson <- function (spobj, dsn = getwd(), layer = deparse(substitute(spob
   file.rename(tmpfn, file)
   return(invisible(file))
   }
+```
+
+```{r air_basins}
+air_basins <- extract_layer(
+  dsn = unzip_url("http://www.arb.ca.gov/ei/gislib/boundaries/ca_air_basins.zip", keep_zipfile = TRUE),
+  layer = "CaAirBasin",
+  datum = WGS84)
 
 message("Wrote contents to ", write_geojson(air_basins, dsn = "boundaries"))
 ```
